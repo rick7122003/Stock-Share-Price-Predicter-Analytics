@@ -1,8 +1,4 @@
-from IPython.display import HTML
-HTML('<div style="font-size: 30px; font-weight: bold;">'
-     'CAPSTONE 2 Project - Share price predictive analytics'
-     '</div>')
-
+# CAPSTONE 2 Project - Share price predictive analytics
 
 
 Gradio app deployment using Linear Regressor model: Machine Learning model adopted with 3 visualization chart for:
