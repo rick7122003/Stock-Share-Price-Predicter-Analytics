@@ -3,11 +3,7 @@ HTML('<div style="font-size: 30px; font-weight: bold;">'
      'CAPSTONE 2 Project - Share price predictive analytics, Preparation data set and Data Cleaning'
      '</div>')
 
-# CAPSTONE 2 Project - Share price predictive analytics #
-# Preparation data set and Data Cleaning # 
 
-# Stock-Share-Price-Predicter-Analytics
-Stock Share Price Predictive Analytics
 
 Gradio app deployment using Linear Regressor model: Machine Learning model adopted with 3 visualization chart for:
 
