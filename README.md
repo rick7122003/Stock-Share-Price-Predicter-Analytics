@@ -1,6 +1,6 @@
 from IPython.display import HTML
 HTML('<div style="font-size: 30px; font-weight: bold;">'
-     'CAPSTONE 2 Project - Share price predictive analytics, Preparation data set and Data Cleaning'
+     'CAPSTONE 2 Project - Share price predictive analytics'
      '</div>')
 
 
