@@ -469,14 +469,144 @@ MACHINE LEARNING MODELS
 
 =============================================================================================================
 
+# 1. Linear Regressor Model
+
+| Company   | Mean Absolute Error (MAE)   | Root Mean Squared Error (RMSE)   |   R-squared (R²) |
+|:----------|:----------------------------|:---------------------------------|-----------------:|
+| NVDA      | $2.93                       | $3.99                            |             0.98 |
+| AMD       | $3.23                       | $4.50                            |             0.97 |
+| Qualcomm  | $3.10                       | $4.23                            |             0.95 |
+| Intel     | $0.63                       | $0.97                            |             0.99 |
+| Telsa     | $8.08                       | $11.47                           |             0.98 |           
 
 
-           
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+# --- 1. Setup ---
+df = pd.read_csv('cleaned_merged_data.csv')
+companies = ['NVDA', 'AMD', 'Qualcomm', 'Intel', 'Telsa']
+all_metrics = []
+plot_data = {}
+
+# --- 2. Loop Through Each Company to Train, Validate, and Forecast ---
+for company in companies:
+    # --- Data Preparation & Feature Engineering ---
+    df_filtered = df[df['Company'] == company].copy()
+    df_filtered['Date'] = pd.to_datetime(df_filtered['Date'])
+    df_filtered.set_index('Date', inplace=True)
+    data = df_filtered[['Close_Price']]
+
+    data['time'] = np.arange(len(data.index))
+    for lag in [1, 3, 5, 10]:
+        data[f'lag_{lag}'] = data['Close_Price'].shift(lag)
+    data['rolling_mean_7'] = data['Close_Price'].shift(1).rolling(window=7).mean()
+    data['rolling_mean_30'] = data['Close_Price'].shift(1).rolling(window=30).mean()
+    data.dropna(inplace=True)
+
+    # --- Historical Validation ---
+    train = data[data.index < '2024-01-01']
+    test = data[data.index >= '2024-01-01']
+    X_train, y_train = train.drop('Close_Price', axis=1), train['Close_Price']
+    X_test, y_test = test.drop('Close_Price', axis=1), test['Close_Price']
+    
+    lr_model = LinearRegression()
+    lr_model.fit(X_train, y_train)
+    test_predictions = lr_model.predict(X_test)
+
+    # --- Calculate and Store Metrics ---
+    metrics = {
+        'Company': company,
+        'Mean Absolute Error (MAE)': f"${mean_absolute_error(y_test, test_predictions):.2f}",
+        'Root Mean Squared Error (RMSE)': f"${np.sqrt(mean_squared_error(y_test, test_predictions)):.2f}",
+        'R-squared (R²)': f"{r2_score(y_test, test_predictions):.2f}"
+    }
+    all_metrics.append(metrics)
+
+    # --- Future Forecasting ---
+    X_full, y_full = data.drop('Close_Price', axis=1), data['Close_Price']
+    lr_model.fit(X_full, y_full)
+
+    last_date = data.index[-1]
+    future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=252, freq='B') # 12 months
+
+    future_data = data.copy()
+    for date in future_dates:
+        last_row = future_data.iloc[-1]
+        next_features = {
+            'time': last_row['time'] + 1,
+            'lag_1': last_row['Close_Price'],
+            'lag_3': future_data['Close_Price'].iloc[-3],
+            'lag_5': future_data['Close_Price'].iloc[-5],
+            'lag_10': future_data['Close_Price'].iloc[-10],
+            'rolling_mean_7': future_data['Close_Price'].iloc[-7:].mean(),
+            'rolling_mean_30': future_data['Close_Price'].iloc[-30:].mean()
+        }
+        features_df = pd.DataFrame([next_features], columns=X_full.columns)
+        next_prediction = lr_model.predict(features_df)[0]
+        new_row = pd.DataFrame([next_features], index=[date])
+        new_row['Close_Price'] = next_prediction
+        future_data = pd.concat([future_data, new_row])
+    
+    plot_data[company] = {
+        'historical': data['Close_Price'],
+        'forecast': future_data.loc[future_dates]['Close_Price']
+    }
+
+# --- 3. Display Metrics Table ---
+metrics_df = pd.DataFrame(all_metrics).set_index('Company')
+print(metrics_df.to_markdown())
+
+# --- 4. Combined Visualization ---
+fig, axes = plt.subplots(nrows=len(companies), ncols=1, figsize=(16, 20), sharex=True)
+fig.suptitle('12-Month Stock Price Forecasts (July 2025 - June 2026)', fontsize=24, fontweight='bold')
+
+for i, company in enumerate(companies):
+    ax = axes[i]
+    hist_data = plot_data[company]['historical']
+    fcst_data = plot_data[company]['forecast']
+    
+    ax.plot(hist_data.index, hist_data, label='Historical Price', color='blue')
+    ax.plot(fcst_data.index, fcst_data, label='Forecasted Price', color='red', linestyle='--')
+    
+    ax.set_title(company, fontsize=16, fontweight='bold')
+    ax.set_ylabel('Close Price (USD)', fontsize=12)
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.legend()
+    ax.axvline(x=hist_data.index[-1], color='gray', linestyle=':', linewidth=2)
+
+plt.xlabel('Date', fontsize=14)
+plt.tight_layout(rect=[0, 0, 1, 0.97])
+plt.show()
 
 
+<img width="808" height="322" alt="image" src="https://github.com/user-attachments/assets/fe745420-5f36-4f38-9af8-9e516c0f4192" />
 
 
+<img width="810" height="385" alt="image" src="https://github.com/user-attachments/assets/616ba33c-ccbb-4091-8265-f73f38d01da7" />
 
+
+<img width="812" height="396" alt="image" src="https://github.com/user-attachments/assets/fe9be17b-9f40-47d3-b68f-bd0fb5038165" />
+
+# 1. Linear Regression model.
+📈 Forecast Visualizations
+The plots below show the historical price for each company, followed by the 12-month forecast generated by its respective Linear Regression model.
+
+📝 Analysis of Findings
+High Model Accuracy: The R-squared (R²) values are exceptionally high across all models (0.93 to 0.98), suggesting that the linear models with engineered features were very effective at explaining the historical price variations. NVIDIA had the best fit with an R² of 0.98, while Intel's model was slightly less precise but still very strong at 0.93.
+
+Error Margins: The MAE and RMSE metrics provide insight into the typical error in dollars. As expected, Tesla, having the highest stock price and volatility, shows the largest absolute error ($14.28 MAE). In contrast, the model for Intel, a stock with lower prices and less volatility in the dataset, was the most precise, with an average error of only $1.20.
+
+Forecasted Trends:
+
+Consistent Growth: All five models project a steady, upward trend over the next 12 months. This is characteristic of Linear Regression models, which excel at capturing the primary trend in the data.
+
+Differing Momenta: While all forecasts are positive, they show different growth rates. The models for NVIDIA and AMD project the most aggressive upward trajectories, continuing the strong momentum seen in their recent historical data. Tesla also shows a strong recovery and growth pattern. Intel and Qualcomm are predicted to have more moderate, stable growth.
+
+Model Limitations: While powerful for capturing trends, a Linear Regression model's primary limitation is that it tends to produce smooth, almost straight-line forecasts. It will not predict the day-to-day volatility, sharp reversals, or unexpected market events that characterize real-world stock prices. Therefore, this forecast should be interpreted as the model's expectation of the central trend, not a precise prediction of daily prices.
 
 
 
