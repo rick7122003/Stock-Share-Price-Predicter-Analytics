@@ -41,6 +41,24 @@ Accuracy Results reported:
 | Telsa     | $8.08                       | $11.47                           |             0.98 |
 
 
+====================================================================================================================
+
+Basic Steps from Data Preparation, Data Cleaning, Conduct Exploratory Data Analysis (EDA), Machine Learning model test, validation and accuracy matrix checks
+Advance Steps: accuracy matrix comparison, adopt Machine learning model, model deployment to gradio app and visualization to validate deployment test results.
+
+====================================================================================================================
+
+from IPython.display import HTML
+HTML('<div style="font-size: 30px; font-weight: bold;">'
+     'CAPSTONE 2 Project - Share price predictive analytics, Preparation data set and Data Cleaning'
+     '</div>')
+
+# CAPSTONE 2 Project - Share price predictive analytics #
+# Preparation data set and Data Cleaning # 
+
+
+
+
 
 
 
