@@ -518,19 +518,102 @@ Tree-Based Models: Alternatively, with the engineered features (lagged values, m
 Training and Evaluation: It's crucial to split the data chronologically. For instance, use the first four years of data for training and the last year for testing. This simulates a real-world scenario where you predict future prices based on past data. The model's performance can then be measured using metrics like Root Mean Squared Error (RMSE) or Mean Absolute Error (MAE).
 
 This structured approach will allow for the development of a robust price prediction model based on the insights gained from this exploratory analysis.
-=============================================================================================================
+
+
+==========================================================================
+EDA Coding
+
+=========================================================================
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# --- 1. Load the Dataset ---
+df = pd.read_csv('cleaned_merged_data.csv')
+
+# --- 2. Data Cleaning and Preparation ---
+# Convert 'Date' to datetime format and set as index
+df['Date'] = pd.to_datetime(df['Date'])
+df.set_index('Date', inplace=True)
+
+# Focus on stock data by dropping columns with many missing values
+df_stock = df.drop(columns=['CPI', 'Interest_Rate', 'GDP'])
+
+# --- 3. Exploratory Data Analysis and Visualization ---
+print("--- Generating and Saving EDA Visualizations ---")
+
+# Distribution of Closing Prices (Histogram)
+plt.figure(figsize=(12, 6))
+sns.histplot(df_stock['Close_Price'], kde=True, bins=50)
+plt.title('Distribution of Closing Prices')
+plt.xlabel('Close Price')
+plt.ylabel('Frequency')
+plt.grid(True)
+plt.savefig('price_distribution_histogram.png')
+plt.close()
+print("Saved 'price_distribution_histogram.png'")
+
+# Box Plot of Closing Prices
+plt.figure(figsize=(12, 4))
+sns.boxplot(x=df_stock['Close_Price'])
+plt.title('Box Plot of Closing Prices')
+plt.xlabel('Close Price')
+plt.grid(True)
+plt.savefig('price_boxplot.png')
+plt.close()
+print("Saved 'price_boxplot.png'")
+
+# Time series plot of Close_Price for each company
+plt.figure(figsize=(15, 8))
+for company in df_stock['Company'].unique():
+    plt.plot(df_stock[df_stock['Company'] == company].index,
+             df_stock[df_stock['Company'] == company]['Close_Price'],
+             label=company)
+plt.title('Closing Price Over Time for Each Company')
+plt.xlabel('Date')
+plt.ylabel('Close Price ($)')
+plt.legend()
+plt.grid(True)
+plt.savefig('closing_price_over_time.png')
+plt.close()
+print("Saved 'closing_price_over_time.png'")
+
+# Correlation matrix of numerical features
+plt.figure(figsize=(10, 8))
+correlation_matrix = df_stock[['Open_Price', 'Highest_Price', 'Lowest_Price', 'Close_Price', 'Volume']].corr()
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Matrix of Stock Features')
+plt.savefig('correlation_matrix.png')
+plt.close()
+print("Saved 'correlation_matrix.png'")
+
+print("\nAnalysis complete. All visualizations have been saved as image files.")
+
+
+--- Generating and Saving EDA Visualizations ---
+Saved 'price_distribution_histogram.png'
+Saved 'price_boxplot.png'
+Saved 'closing_price_over_time.png'
+Saved 'correlation_matrix.png'
+
+# Analysis complete. All visualizations have been saved as image files.
+
+# 1. Price Distribution Histogram: Shows the right-skewed distribution of closing prices.
+# 2. Price Box Plot: Highlights the spread of the closing prices and identifies outliers at the higher end.
+# 3. Closing Price Over Time: Displays the price trends for each of the five companies, clearly showing the significant growth of NVDA and Telsa.
+# 4. Correlation Matrix: Visualizes the near-perfect correlation between the daily price metrics (Open, High, Low, Close).¶
+
+<img width="601" height="616" alt="image" src="https://github.com/user-attachments/assets/1c4f352c-ba09-431f-a67b-c1ef396455b7" />
+
+
+<img width="540" height="493" alt="image" src="https://github.com/user-attachments/assets/700ed675-cb7f-44ed-b47c-6a239af29c9c" />
+
+
+<img width="753" height="435" alt="image" src="https://github.com/user-attachments/assets/0a059682-d017-48aa-8e02-7881956f275b" />
 
 
 
-
-
-
-
-
-
-
-
-=============================================================================================================
+=======================================================================
 
 # MACHINE LEARNING Models
 
