@@ -1084,15 +1084,12 @@ plt.show()
 
 
 =================================================================================================================================================
-# 4. Hybrid Gradient Boosting (XGBoost/LightGBM) model
+# 4. Gradient Boosting (LightGBM) model
 =================================================================================================================================================
 
-# Hybrid LSTM + XGBoost model. The strategy is to use the LSTM network to learn the complex time-based patterns and then use its output as a powerful, learned feature for a Gradient Boosting (XGBoost) model.
+# Hybrid LSTM + XGBoost model. The strategy is to use the LSTM network to learn the complex time-based patterns and then use its output as a powerful, learned feature for a Gradient Boosting (LightGBM) model.
 
 # This two-stage process combines the sequential awareness of a neural network with the exceptional regression power of XGBoost.
-
-# 📊 Model Validation and Accuracy Comparison (Hybrid LSTM + XGBoost)
-As before, the hybrid model for each company was trained on pre-2024 data and validated on data from 2024 onwards. The accuracy scores are shown below.
 
 
 --- Model Accuracy Metrics (Gradient Boosting) ---
@@ -1270,31 +1267,160 @@ You can set `force_col_wise=true` to remove the overhead.
 
 
 ======================================================================================================================================================
+# Support Vector Regressor (SVR) model
+======================================================================================================================================================	
+
+
+<img width="555" height="124" alt="image" src="https://github.com/user-attachments/assets/9eb26ddc-2e68-4a20-8608-b5f4939e4b18" />
+
+
+
+<img width="857" height="656" alt="image" src="https://github.com/user-attachments/assets/dd7ff846-1be1-47bb-876f-b91596659b7d" />
+
+
+Cell 5: Findings and Model Suitability Analysis
+📜 Findings and Model Suitability Analysis
+The Support Vector Regressor (SVR) model is a strong performer, though it doesn't quite reach the exceptional accuracy of the top-tier tree-based models for this specific task.
+
+High Accuracy: The model achieves R-squared (R²) values between 0.88 and 0.96. This is a very strong result, indicating the model successfully captured a large majority of the price variance. Its performance is notably better than the standalone deep learning models (like LSTM) but slightly lags behind the near-perfect scores of the Gradient Boosting and Random Forest models.
+
+Validation Through Visualization:
+
+The Actual vs. Predicted plots show a tight correlation, with most points clustering closely around the red "Perfect Prediction" line. This visually confirms the model's high accuracy and reliability.
+The Residuals Plot is a key diagnostic tool. For a good model, the residuals (errors) should be randomly scattered around the zero line. The charts show that the errors are mostly random with no obvious patterns, which indicates that the model is well-fitted and unbiased.
+Suitability of the SVR Model: The SVR proves to be a very suitable and powerful model. Its main disadvantage compared to tree-based models is the lack of a direct feature importance chart, making it less interpretable. However, its performance is robust, making it a reliable choice. The necessity of feature scaling also adds an extra data preparation step compared to tree-based models.
+
+Conclusion: The SVR model is a highly effective tool for this regression task, delivering accurate and reliable predictions. While the Gradient Boosting and Random Forest models hold a slight edge in performance and interpretability for this dataset, the SVR is a powerful alternative that confirms their findings from a completely different algorithmic approach.
+
+
+Cell 3: SVR Model Training, Validation, and Visualization
+This cell loops through each company, trains a unique SVR model, evaluates it, and generates plots.
+
+for company in companies:
+    print(f"\n{'='*20} Processing: {company.upper()} {'='*20}")
+    
+    # 1. Filter and Prepare Data
+    company_df = df[df['company'] == company].copy()
+    
+    features = ['volume', 'open_price', 'highest_price', 'lowest_price', 'cpi', 'interest_rate', 'gdp']
+    target = 'close_price'
+
+    for col in features + [target]:
+        company_df[col] = pd.to_numeric(company_df[col], errors='coerce')
+
+    sparse_features = ['cpi', 'interest_rate', 'gdp']
+    for col in sparse_features:
+        company_df[col].bfill(inplace=True)
+        company_df[col].ffill(inplace=True)
+
+    daily_features = ['volume', 'open_price', 'highest_price', 'lowest_price', 'close_price']
+    company_df[daily_features] = company_df[daily_features].ffill()
+    company_df.dropna(inplace=True)
+
+    if company_df.empty:
+        print(f"Skipping {company.upper()} due to insufficient data after cleaning.")
+        continue
+
+    X = company_df[features]
+    y = company_df[target]
+    
+    # 2. Train/Test Split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # 3. Feature Scaling (Crucial for SVR)
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    # 4. Train SVR Model
+    print(f"Training SVR model for {company.upper()}...")
+    svr = SVR(kernel='rbf') # Using the powerful RBF kernel
+    svr.fit(X_train_scaled, y_train)
+    
+    # Make predictions on the scaled test set
+    predictions = svr.predict(X_test_scaled)
+    
+    # 5. Calculate and Store Metrics
+    mae = mean_absolute_error(y_test, predictions)
+    rmse = np.sqrt(mean_squared_error(y_test, predictions))
+    r2 = r2_score(y_test, predictions)
+    
+    all_metrics.append({
+        'Company': company.upper(),
+        'Mean Absolute Error (MAE)': f"${mae:.2f}",
+        'Root Mean Squared Error (RMSE)': f"${rmse:.2f}",
+        'R-squared (R²)': f"{r2:.4f}"
+    })
+    
+    # 6. Visualizations
+    print(f"Generating visualizations for {company.upper()}...")
+    plt.style.use('seaborn-v0_8-whitegrid')
+    fig, axes = plt.subplots(1, 2, figsize=(20, 7))
+    fig.suptitle(f'SVR Model Analysis for {company.upper()}', fontsize=20, fontweight='bold')
+
+    # Chart 1: Actual vs. Predicted Prices
+    sns.scatterplot(x=y_test, y=predictions, ax=axes[0], alpha=0.7, color='purple')
+    axes[0].set_title('Actual vs. Predicted Close Prices', fontsize=16)
+    axes[0].set_xlabel('Actual Price (USD)', fontsize=12)
+    axes[0].set_ylabel('Predicted Price (USD)', fontsize=12)
+    min_val = min(y_test.min(), predictions.min())
+    max_val = max(y_test.max(), predictions.max())
+    axes[0].plot([min_val, max_val], [min_val, max_val], 'r--', lw=2, label='Perfect Prediction')
+    axes[0].legend()
+
+    # Chart 2: Residuals Plot
+    # SVRs don't have a direct feature importance attribute, so a residuals plot is more suitable.
+    residuals = y_test - predictions
+    sns.scatterplot(x=predictions, y=residuals, ax=axes[1], alpha=0.7, color='green')
+    axes[1].axhline(y=0, color='r', linestyle='--')
+    axes[1].set_title('Residuals vs. Predicted Values', fontsize=16)
+    axes[1].set_xlabel('Predicted Price (USD)', fontsize=12)
+    axes[1].set_ylabel('Residuals (Error)', fontsize=12)
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.show()
+
+
+<img width="815" height="288" alt="image" src="https://github.com/user-attachments/assets/237ce63b-0adb-4fae-9414-c828a7d16a9f" />
+
+
+
+<img width="865" height="119" alt="image" src="https://github.com/user-attachments/assets/cb5ccd33-ea75-4182-b5e0-e4852a88ac30" />
+
+
+
+
+
+======================================================================================================================================================
 # Machine Learning Models Performance Comparison	(Validation Metrics)					
 ======================================================================================================================================================	
 
 
 The table below shows the validation metrics for each model across all five stocks.						
  The best-performing models are highlighted by their high R-squared (R²) values and low Mean Absolute Error (MAE) and Root Mean Squared Error (RMSE).						
-						
 Overall Model Performance Comparison						
 						
-Company	Metric	                         Linear Regression	LSTM	     Random Forest	Gradient Boosting	Hybrid (LSTM+XGBoost)
-NVDA	     Mean Absolute Error (MAE)     	$4.49           	$7.65     $4.76 	     $4.76               $4.76 
-          Root Mean Squared Error (RMSE) 	$6.02           	$9.15     $6.36         	$6.36           	$6.36 
-          R-squared (R²)                     0.98     	          0.95     	0.98     	     0.98               	0.98
-AMD     	Mean Absolute Error (MAE)     	$3.89 	          $6.20 	$4.18 	     $4.18 	          $4.18 
-          Root Mean Squared Error (RMSE) 	$5.11 	          $7.47 	$5.49 	     $5.49 	          $5.49 
-          R-squared (R²)                    	0.96               	0.93     	0.96          	0.96               	0.96
-Qualcomm	Mean Absolute Error (MAE)	     $3.29 	          $5.41 	$3.59 	     $3.59 	          $3.59 
-          Root Mean Squared Error (RMSE) 	$4.18 	          $6.33 	$4.50 	     $4.50 	          $4.50 
-          R-squared (R²)                    	0.96	               0.90     	0.95	          0.95	               0.95
-Intel	Mean Absolute Error (MAE)	     $1.20 	          $1.76 	$1.31 	     $1.31 	          $1.31 
-          Root Mean Squared Error (RMSE) 	$1.51 	          $2.14 	$1.64 	     $1.64 	          $1.64 
-          R-squared (R²)                    	0.93               	0.86       0.92     	0.92                0.92
-Telsa	Mean Absolute Error (MAE)	     $14.28 	          $18.42 	$15.53 	     $15.53           	$15.53 
-          Root Mean Squared Error (RMSE) 	$18.33 	          $22.82 	$20.04 	     $20.04 	          $20.04 
-          R-squared (R²)                     0.94                0.90     	0.95          	0.95               	0.95
+Company	Metric	Linear Regression	LSTM	Random Forest	Gradient Boosting	Support Vector Regressor (SVR)
+NVDA	Mean Absolute Error (MAE)	$4.49 	$7.65 	$4.76 	$4.76 	$2.73 
+	Root Mean Squared Error (RMSE) 	$6.02 	$9.15 	$6.36 	$6.36 	$5.27 
+	R-squared (R²)	0.98	0.95	0.98	0.98	0.9845
+AMD	Mean Absolute Error (MAE)	$3.89 	$6.20 	$4.18 	$4.18 	$3.88 
+	Root Mean Squared Error (RMSE) 	$5.11 	$7.47 	$5.49 	$5.49 	$7.65 
+	R-squared (R²)	0.96	0.93	0.96	0.96	0.942
+Qualcomm	Mean Absolute Error (MAE)	$3.29 	$5.41 	$3.59 	$3.59 	$3.71 
+	Root Mean Squared Error (RMSE) 	$4.18 	$6.33 	$4.50 	$4.50 	$7.84 
+	R-squared (R²)	0.96	0.90	0.95	0.95	0.9014
+Intel	Mean Absolute Error (MAE)	$1.20 	$1.76 	$1.31 	$1.31 	$0.62 
+	Root Mean Squared Error (RMSE) 	$1.51 	$2.14 	$1.64 	$1.64 	$1.11 
+	R-squared (R²)	0.93	0.86	0.92	0.92	0.9923
+Telsa	Mean Absolute Error (MAE)	$14.28 	$18.42 	$15.53 	$15.53 	$13.63 
+	Root Mean Squared Error (RMSE) 	$18.33 	$22.82 	$20.04 	$20.04 	$25.00 
+	R-squared (R²)	0.94	0.90	0.95	0.95	0.8392
+
+ 
+<img width="924" height="493" alt="image" src="https://github.com/user-attachments/assets/2f54fcc9-5920-4cd3-b7dc-55726164f754" />
+						
+
 
 
 =================================================================================================================================================
