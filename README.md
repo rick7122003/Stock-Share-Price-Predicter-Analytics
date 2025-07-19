@@ -453,6 +453,83 @@ HTML('<div style="font-size: 30px; font-weight: bold;">'
      'Machine Learning Models'
      '</div>')
 
+
+
+
+=============================================================================================================
+# Exploratory Data Analysis - EDA 
+=============================================================================================================
+
+
+An exploratory data analysis of the provided stock data has been conducted. Below are the summary findings and key takeaways that will help guide a price prediction analysis.
+
+Summary of Findings
+Here's what the initial analysis of the data reveals:
+
+Data Overview: The dataset contains daily stock market data for five companies: AMD, Intel, NVDA, Qualcomm, and Telsa. The data spans from July 2020 to July 2025. After an initial cleaning, the economic indicators (CPI, Interest Rate, and GDP) were removed from this stage of the analysis due to a large number of missing values. The core stock data (prices and volume) is complete and clean.
+
+Price Distribution: The distribution of closing prices is skewed to the right, indicating that while most of the closing prices are clustered at the lower end of the range, there are a number of instances of very high closing prices. This is also confirmed by the box plot, which shows a number of outliers on the higher side.
+
+Company Representation: The dataset is well-balanced, with an equal number of data points for each of the five companies. This is ideal for building and comparing company-specific models or for creating a single model that includes the company as a feature.
+
+Price and Volume Trends Over Time:
+
+The closing prices of all companies have generally shown an upward trend over the 5-year period.
+
+NVDA and Telsa, in particular, have demonstrated remarkable growth and volatility compared to the other companies.
+
+The relationship between price and volume is not immediately obvious from a combined plot and would need to be investigated for each stock.
+
+Correlations Between Features: There's a very strong, near-perfect positive correlation (close to 1.0) between the Open_Price, Highest_Price, Lowest_Price, and Close_Price. This is expected, as these prices are all recorded for the same trading day and move together. This high level of correlation, known as multicollinearity, is an important consideration for building a predictive model.
+
+Key Takeaways for Price Prediction Analysis
+The exploratory data analysis provides a solid foundation for a price prediction project. Here are the key takeaways and the recommended direction:
+
+The Goal: The primary goal will be to predict the Close_Price of the stocks.
+
+Important Predictors:
+
+Historical Prices: The most significant predictors for the next day's price are the current and previous days' prices (Open_Price, Highest_Price, Lowest_Price, Close_Price).
+
+Trading Volume: Volume is another crucial feature to include, as changes in trading volume can often signal future price movements.
+
+Company: The Company itself is a vital feature. Price behaviors are company-specific, so we should either build a separate prediction model for each company or include the company as a categorical feature in a single model.
+
+Time-Based Features: Features engineered from the date, such as the day of the week, month, or year, could also capture seasonal patterns in stock prices.
+
+Next Steps for Building a Prediction Model:
+
+Feature Engineering: The most critical step is to create meaningful features. Since we want to predict the future price, we cannot use the same day's open, high, and low prices as direct inputs. Instead, we should create:
+
+Lagged Features: The Close_Price, Volume, etc., from the previous day (or days) are essential.
+
+Moving Averages: Calculate moving averages of the Close_Price (e.g., 7-day, 30-day) to smooth out short-term fluctuations and identify longer-term trends.
+
+Technical Indicators: Other technical indicators like the Relative Strength Index (RSI) or Moving Average Convergence Divergence (MACD) could also be powerful predictors.
+
+Handling Economic Data: The CPI, Interest_Rate, and GDP data, although sparse, captures the macroeconomic environment. For a daily prediction model, you can use a "forward-fill" strategy, where the last known value is carried forward until a new value is available. This assumes that the economic climate is stable between announcements.
+
+Model Selection:
+
+Time Series Models: For predictions based on past price sequences, time-series models like ARIMA or more advanced deep learning models like LSTMs (Long Short-Term Memory networks) are highly effective.
+
+Tree-Based Models: Alternatively, with the engineered features (lagged values, moving averages), you can use powerful machine learning models like Random Forest or Gradient Boosting (e.g., XGBoost).
+
+Training and Evaluation: It's crucial to split the data chronologically. For instance, use the first four years of data for training and the last year for testing. This simulates a real-world scenario where you predict future prices based on past data. The model's performance can then be measured using metrics like Root Mean Squared Error (RMSE) or Mean Absolute Error (MAE).
+
+This structured approach will allow for the development of a robust price prediction model based on the insights gained from this exploratory analysis.
+=============================================================================================================
+
+
+
+
+
+
+
+
+
+
+
 =============================================================================================================
 
 # MACHINE LEARNING Models
