@@ -1084,7 +1084,7 @@ plt.show()
 
 
 =================================================================================================================================================
-# 4. Hybird Gradient Boosting (XGBoost/LightGBM) model
+# 4. Hybrid Gradient Boosting (XGBoost/LightGBM) model
 =================================================================================================================================================
 
 # Hybrid LSTM + XGBoost model. The strategy is to use the LSTM network to learn the complex time-based patterns and then use its output as a powerful, learned feature for a Gradient Boosting (XGBoost) model.
